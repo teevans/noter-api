@@ -9,7 +9,7 @@
     "prestart": "npm run build",
     "start": "node .",
     "test:watch": "nodemon --watch src -e ts --exec npm run test",
-    "test": "mocha -r ts-node/register src/tests/**/*.ts"
+    "test": "mocha --exit -r ts-node/register src/tests/**/*.ts"
   },
   "dependencies": {
     "@types/bcrypt": "^3.0.0",
