@@ -1,7 +1,9 @@
 process.env.NODE_ENV = "test";
 
 import { INoteModel, Note } from "../../models/note.schema";
+import { IUserModel, User } from "../../models/user.schema";
 
+import bcrypt from "bcrypt";
 import chai from "chai";
 import chaiHttp from "chai-http";
 import app from "../../app";
@@ -9,16 +11,37 @@ const should = chai.should();
 
 chai.use(chaiHttp);
 
-const createNote = (done) => {
+const createNote = (userId, done) => {
   Note.create({
     description: "Test Note Desc",
-    title: "Test Note"
+    title: "Test Note",
+    userId,
   }).then((note: INoteModel) => {
     done(note);
   });
 };
 
+const createUser = (done) => {
+  User.create({
+    email: "blah@example.com",
+    name: "Thomas Evans",
+    passwordHash: bcrypt.hashSync("eightcharacterpassword", 10)
+  }).then((user: IUserModel) => {
+    done(user);
+  });
+};
+
 describe("Notes", () => {
+
+  let testUser;
+
+  before((done) => {
+    createUser((user) => {
+      testUser = user;
+      done();
+    });
+  });
+
   beforeEach((done) => {
     Note.remove({}, (err) => {
       done();
@@ -61,12 +84,8 @@ describe("Notes", () => {
     });
 
     it("should get a single note", (done) => {
-      const note = {
-        description: "Second Test Note",
-        title: "Test Note!"
-      };
 
-      createNote((note) => {
+      createNote(testUser._id, (note) => {
         chai
           .request(app)
           .get("/notes/" + note._id)
@@ -79,6 +98,7 @@ describe("Notes", () => {
             res.body.should.have.property("createdAt");
             res.body.should.have.property("recycled");
             res.body.should.have.property("isPublic");
+            res.body.should.have.property("userId");
             done();
           });
       });
@@ -108,7 +128,7 @@ describe("Notes", () => {
     });
 
     it("should update a note", (done) => {
-      createNote((note) => {
+      createNote(testUser._id, (note) => {
         note.description = "New Note!";
 
         chai
@@ -131,7 +151,7 @@ describe("Notes", () => {
     });
 
     it("should update a note without a description", (done) => {
-      createNote((note) => {
+      createNote(testUser._id, (note) => {
         note.description = "";
 
         chai
@@ -154,7 +174,7 @@ describe("Notes", () => {
     });
 
     it("should not update a note without a title", (done) => {
-      createNote((note) => {
+      createNote(testUser._id, (note) => {
         note.description = "";
         note.title = "";
 
@@ -176,7 +196,8 @@ describe("Notes", () => {
     it("should create a note", (done) => {
       const note = {
         description: "Second Test Note",
-        title: "Test Note!"
+        title: "Test Note!",
+        userId: testUser._id,
       };
 
       chai
@@ -184,22 +205,23 @@ describe("Notes", () => {
         .post("/notes")
         .send(note)
         .end((err, res) => {
-          res.should.have.status(201);
-          res.body.should.be.a("object");
-          res.body.should.have.property("title");
-          res.body.should.have.property("description");
-          res.body.should.have.property("updatedAt");
-          res.body.should.have.property("createdAt");
-          res.body.should.have.property("isPublic");
-          res.body.should.have.property("recycled");
-          res.body.should.have.property("_id");
-          done();
+            res.should.have.status(201);
+            res.body.should.be.a("object");
+            res.body.should.have.property("title");
+            res.body.should.have.property("description");
+            res.body.should.have.property("updatedAt");
+            res.body.should.have.property("createdAt");
+            res.body.should.have.property("isPublic");
+            res.body.should.have.property("recycled");
+            res.body.should.have.property("_id");
+            done();
         });
     });
 
     it("should create a note without a description", (done) => {
       const note = {
-        title: "Test Title"
+        title: "Test Title",
+        userId: testUser._id,
       };
 
       chai
@@ -223,6 +245,24 @@ describe("Notes", () => {
     it("should not create a note without a title", (done) => {
       const note = {
         description: "Second Test Note"
+      };
+
+      chai
+        .request(app)
+        .post("/notes")
+        .send(note)
+        .end((err, res) => {
+          res.should.have.status(400);
+          res.body.should.be.a("object");
+          res.body.should.have.property("errors");
+          done();
+        });
+    });
+
+    it("should not create a note without a userId", (done) => {
+      const note = {
+        description: "Second Test Note",
+        title: "Test Note without UserId",
       };
 
       chai
@@ -260,7 +300,7 @@ describe("Notes", () => {
     });
 
     it("should recycle a note", (done) => {
-      createNote((note) => {
+      createNote(testUser._id, (note) => {
         chai
           .request(app)
           .post("/notes/" + note._id + "/recycle")
@@ -297,7 +337,7 @@ describe("Notes", () => {
     });
 
     it("should restore a note", (done) => {
-      createNote((note) => {
+      createNote(testUser._id, (note) => {
         chai
           .request(app)
           .post("/notes/" + note._id + "/restore")
@@ -333,7 +373,7 @@ describe("Notes", () => {
     });
 
     it("should permanently delete a note", (done) => {
-      createNote((note) => {
+      createNote(testUser._id, (note) => {
         chai
           .request(app)
           .delete("/notes/" + note._id)

@@ -21,7 +21,10 @@ export const createValidators = [
   check("title", "A title is required for your note!")
     .exists()
     .isString()
-    .isLength({ min: 1 })
+    .isLength({ min: 1 }),
+  check("userId", "A userId is required for your note!")
+    .exists()
+    .isMongoId()
 ];
 
 /**
@@ -38,11 +41,12 @@ export const create = (req: Request, res: Response, next: NextFunction) => {
     return;
   }
 
-  const { description, title } = req.body;
+  const { description, title, userId } = req.body;
 
   const newNote = new Note({
     description,
-    title
+    title,
+    userId
   });
 
   Note.create(newNote)
