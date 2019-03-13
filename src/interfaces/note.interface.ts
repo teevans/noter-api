@@ -6,4 +6,5 @@ export interface INote {
   recycled?: boolean;
   createdAt?: Date;
   updatedAt?: Date;
+  sharedWith?: string[];
 }

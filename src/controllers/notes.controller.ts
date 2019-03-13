@@ -21,7 +21,9 @@ export const getAll = (
     return;
   }
 
-  Note.find({ userId: req.user })
+  Note.find({
+    $or: [{ userId: req.user }, { sharedWith: req.user }]
+  })
     .then((notes: INoteModel[]) => {
       res.json(notes);
     })
@@ -110,7 +112,7 @@ export const getById = (
 
       // If note is not shared with or belongs to
       // user in request, return 401
-      if (note.userId !== req.user) {
+      if (note.userId !== req.user && note.sharedWith.indexOf(req.user) === -1) {
         res.sendStatus(401);
         return;
       }
@@ -242,7 +244,11 @@ export const restoreValidators = [
  * @param res  {Response} Express Response Object
  * @param next {NextFunction} Next Function to continue
  */
-export const restore = async (req: IAuthorizedRequest, res: Response, next: NextFunction) => {
+export const restore = async (
+  req: IAuthorizedRequest,
+  res: Response,
+  next: NextFunction
+) => {
   const errors = validationResult(req);
   if (!errors.isEmpty()) {
     res.status(400).json({ errors: errors.array() });

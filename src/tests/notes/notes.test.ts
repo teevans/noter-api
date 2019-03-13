@@ -64,6 +64,7 @@ const seedUsersAndNotes = async () => {
     }),
     new Note({
       description: "Belongs to User 2",
+      sharedWith: [users[0]._id],
       title: "Test Note User 2",
       userId: users[1]._id
     }),
@@ -71,6 +72,11 @@ const seedUsersAndNotes = async () => {
       description: "Belongs to User 2",
       isPublic: true,
       title: "Test Public Note User 2",
+      userId: users[1]._id
+    }),
+    new Note({
+      description: "Belongs to User 2",
+       title: "Test Non shared Non Public Note User 2",
       userId: users[1]._id
     })
   ];
@@ -95,7 +101,7 @@ describe("Notes", () => {
   });
 
   describe("GET /notes", () => {
-    it("should get all notes for signed in user.", (done) => {
+    it("should get all notes for signed in user including shared with.", (done) => {
       // Sign in the first user. And ensure it only returns the notes
       // assigned to it.
       authorizeUser1((token: string) => {
@@ -106,7 +112,7 @@ describe("Notes", () => {
           .end((err, res) => {
             res.should.have.status(200);
             res.body.should.be.a("array");
-            res.body.length.should.be.eql(3);
+            res.body.length.should.be.eql(4);
             done();
           });
       });
@@ -144,7 +150,7 @@ describe("Notes", () => {
       authorizeUser1((token: string) => {
         chai
           .request(app)
-          .get("/notes/" + notes[3]._id)
+          .get("/notes/" + notes[5]._id)
           .set("Authorization", "Bearer " + token)
           .end((err, res) => {
             res.should.have.status(401);
@@ -171,6 +177,27 @@ describe("Notes", () => {
         chai
           .request(app)
           .get("/notes/" + notes[0]._id)
+          .set("Authorization", "Bearer " + token)
+          .end((err, res) => {
+            res.should.have.status(200);
+            res.body.should.be.a("object");
+            res.body.should.have.property("title");
+            res.body.should.have.property("description");
+            res.body.should.have.property("updatedAt");
+            res.body.should.have.property("createdAt");
+            res.body.should.have.property("recycled");
+            res.body.should.have.property("isPublic");
+            res.body.should.have.property("userId");
+            done();
+          });
+      });
+    });
+
+    it("should get a single shared note", (done) => {
+      authorizeUser1((token: string) => {
+        chai
+          .request(app)
+          .get("/notes/" + notes[3]._id)
           .set("Authorization", "Bearer " + token)
           .end((err, res) => {
             res.should.have.status(200);
