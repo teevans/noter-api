@@ -18,6 +18,12 @@ mongoose.Promise = global.Promise;
 
 const app = express();
 
+// Application/JSON for all requests.
+app.use((req, res, next) => {
+    res.contentType("application/json");
+    next();
+});
+
 app.use(logger("dev"));
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
