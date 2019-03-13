@@ -5,6 +5,7 @@ import logger from "morgan";
 import path from "path";
 
 import notesRouter from "./routes/notes.routes";
+import usersRouter from "./routes/users.routes";
 
 // Setup Mongoose Connection
 const dbUrl = "mongodb://localhost:27017/noter";
@@ -31,5 +32,6 @@ app.use(cookieParser());
 app.use(express.static(path.join(__dirname, "public")));
 
 app.use("/notes", notesRouter);
+app.use("/users", usersRouter);
 
 export default app;
