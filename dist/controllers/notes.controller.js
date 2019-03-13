@@ -9,9 +9,11 @@ const note_schema_1 = require("../models/note.schema");
  * @param next {NextFunction} Next Function to continue
  */
 exports.getAll = (req, res, next) => {
-    note_schema_1.Note.find().then((notes) => {
+    note_schema_1.Note.find()
+        .then((notes) => {
         res.json(notes);
-    }).catch(next);
+    })
+        .catch(next);
 };
 /**
  * Create Note
@@ -25,9 +27,11 @@ exports.create = (req, res, next) => {
     note_schema_1.Note.create({
         description: body.description,
         title: body.title
-    }).then((note) => {
+    })
+        .then((note) => {
         res.json(note);
-    }).catch(next);
+    })
+        .catch(next);
 };
 /**
  * Get Note By Id
@@ -38,9 +42,11 @@ exports.create = (req, res, next) => {
  */
 exports.getById = (req, res, next) => {
     const id = req.params.id;
-    note_schema_1.Note.findById(id).then((note) => {
+    note_schema_1.Note.findById(id)
+        .then((note) => {
         res.json(note);
-    }).catch(next);
+    })
+        .catch(next);
 };
 /**
  * Update Note
@@ -55,10 +61,12 @@ exports.update = (req, res, next) => {
     note_schema_1.Note.findByIdAndUpdate(id, {
         description: body.description,
         recycled: body.recycled,
-        title: body.title,
-    }).then((note) => {
+        title: body.title
+    })
+        .then((note) => {
         res.json(note);
-    }).catch(next);
+    })
+        .catch(next);
 };
 /**
  * Recycle's Note
@@ -70,10 +78,12 @@ exports.update = (req, res, next) => {
 exports.recycle = (req, res, next) => {
     const id = req.params.id;
     note_schema_1.Note.findByIdAndUpdate(id, {
-        recycled: true,
-    }).then((note) => {
+        recycled: true
+    })
+        .then((note) => {
         res.json(note);
-    }).catch(next);
+    })
+        .catch(next);
 };
 /**
  * Delete Note Permanently
@@ -84,8 +94,10 @@ exports.recycle = (req, res, next) => {
  */
 exports.deletePermanently = (req, res, next) => {
     const id = req.params.id;
-    note_schema_1.Note.findByIdAndDelete(id).then((note) => {
+    note_schema_1.Note.findByIdAndDelete(id)
+        .then((note) => {
         res.json(note);
-    }).catch(next);
+    })
+        .catch(next);
 };
 //# sourceMappingURL=notes.controller.js.map
