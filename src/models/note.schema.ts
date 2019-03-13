@@ -7,7 +7,8 @@ export let NoteSchema: Schema = new Schema(
   {
     description: { type: String, required: false, default: "" },
     recycled: { type: Boolean, default: false },
-    title: { type: String, required: [true, "A title is required!"] }
+    title: { type: String, required: [true, "A title is required!"] },
+    isPublic: { type: Boolean, default: false }
   },
   {
     timestamps: true

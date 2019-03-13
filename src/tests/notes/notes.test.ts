@@ -78,6 +78,7 @@ describe("Notes", () => {
             res.body.should.have.property("updatedAt");
             res.body.should.have.property("createdAt");
             res.body.should.have.property("recycled");
+            res.body.should.have.property("isPublic");
             done();
           });
       });
@@ -122,6 +123,7 @@ describe("Notes", () => {
             res.body.should.have.property("updatedAt");
             res.body.should.have.property("createdAt");
             res.body.should.have.property("recycled");
+            res.body.should.have.property("isPublic");
             res.body.should.have.property("_id");
             done();
           });
@@ -144,6 +146,7 @@ describe("Notes", () => {
             res.body.should.have.property("updatedAt");
             res.body.should.have.property("createdAt");
             res.body.should.have.property("recycled");
+            res.body.should.have.property("isPublic");
             res.body.should.have.property("_id");
             done();
           });
@@ -187,6 +190,7 @@ describe("Notes", () => {
           res.body.should.have.property("description");
           res.body.should.have.property("updatedAt");
           res.body.should.have.property("createdAt");
+          res.body.should.have.property("isPublic");
           res.body.should.have.property("recycled");
           res.body.should.have.property("_id");
           done();
@@ -210,6 +214,7 @@ describe("Notes", () => {
           res.body.should.have.property("updatedAt");
           res.body.should.have.property("createdAt");
           res.body.should.have.property("recycled");
+          res.body.should.have.property("isPublic");
           res.body.should.have.property("_id");
           done();
         });
