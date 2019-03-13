@@ -31,14 +31,34 @@ const createUser = (done) => {
   });
 };
 
+const authorizeUser = (done) => {
+
+      chai
+        .request(app)
+        .post("/users/signin")
+        .send({
+          email: "blah@example.com",
+          password: "eightcharacterpassword",
+        })
+        .end((err, res) => {
+          console.log(res);
+          res.should.have.status(200);
+          done(res.body.token);
+        });
+};
+
 describe("Notes", () => {
 
   let testUser;
+  let authToken;
 
   before((done) => {
     createUser((user) => {
       testUser = user;
-      done();
+      authorizeUser((token) => {
+        authToken = token;
+        done();
+      });
     });
   });
 
@@ -53,7 +73,9 @@ describe("Notes", () => {
       chai
         .request(app)
         .get("/notes")
+        .set("Authorization", "Bearer " + authToken)
         .end((err, res) => {
+          console.log(res);
           res.should.have.status(200);
           res.body.should.be.a("array");
           res.body.length.should.be.eql(0);

@@ -1,5 +1,6 @@
 process.env.NODE_ENV = "test";
 
+import { Response } from "express";
 import { IUserModel, User } from "../../models/user.schema";
 
 import bcrypt from "bcrypt";
@@ -180,6 +181,25 @@ describe("Users", () => {
           .send(req)
           .end((err, res) => {
             res.should.have.status(200);
+            done();
+          });
+      });
+    });
+
+    it("should create a JWT properly on successful authentication", (done) => {
+      createUser((user) => {
+        const req = {
+          email: user.email,
+          password: "eightcharacterpassword"
+        };
+
+        chai
+          .request(app)
+          .post("/users/signin")
+          .send(req)
+          .end((err, res) => {
+            res.should.have.status(200);
+            res.body.should.have.property("token");
             done();
           });
       });

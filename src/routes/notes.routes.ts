@@ -1,9 +1,10 @@
 import express from "express";
+import {authorize} from "../middlewares/authorization";
 const router = express.Router();
 
 import * as NotesController from "../controllers/notes.controller";
 
-router.get("/", NotesController.getAll);
+router.get("/", authorize, NotesController.getAll);
 router.get("/:id", NotesController.getByIdValidators, NotesController.getById);
 router.post("/", NotesController.createValidators, NotesController.create);
 router.put("/:id", NotesController.updateValidators, NotesController.update);

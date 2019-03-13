@@ -1,6 +1,7 @@
 import bcrypt from "bcrypt";
 import { NextFunction, Request, Response } from "express";
 import { check, validationResult } from "express-validator/check";
+import jwt from "jsonwebtoken";
 import { IUserModel, User } from "../models/user.schema";
 
 /**
@@ -48,7 +49,17 @@ export const signIn = async (
   const user = await User.findOne({ email });
 
   if (user && bcrypt.compareSync(password, user.passwordHash)) {
-    res.sendStatus(200);
+
+    // To all detail oriented observers. You'll notice this is
+    // not in any way secure or verifyable. You could forge a JWT
+    // token and have complete access to this setup. This is not
+    // designed to be production ready when it comes to the security
+    // aspect. Yet.
+    const token = jwt.sign({ userId: user._id}, "secret", {
+      expiresIn: "2 days",
+    });
+
+    res.status(200).json({ token });
     return;
   }
 
