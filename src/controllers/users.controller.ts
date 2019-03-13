@@ -50,12 +50,13 @@ export const signIn = async (
 
   if (user && bcrypt.compareSync(password, user.passwordHash)) {
 
+    const secret = process.env.JWT_SECRET || "secret";
     // To all detail oriented observers. You'll notice this is
     // not in any way secure or verifyable. You could forge a JWT
     // token and have complete access to this setup. This is not
     // designed to be production ready when it comes to the security
     // aspect. Yet.
-    const token = jwt.sign({ userId: user._id}, "secret", {
+    const token = jwt.sign({ userId: user._id}, secret, {
       expiresIn: "2 days",
     });
 

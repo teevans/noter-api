@@ -1,6 +1,5 @@
 process.env.NODE_ENV = "test";
 
-import { Response } from "express";
 import { IUserModel, User } from "../../models/user.schema";
 
 import bcrypt from "bcrypt";
@@ -21,107 +20,24 @@ const createUser = (done) => {
   });
 };
 
+const authorizeUser1 = (done) => {
+  chai
+    .request(app)
+    .post("/users/signin")
+    .send({
+      email: "blah@example.com",
+      password: "eightcharacterpassword"
+    })
+    .end((err, res) => {
+      res.should.have.status(200);
+      done(res.body.token);
+    });
+};
+
 describe("Users", () => {
   beforeEach((done) => {
     User.remove({}, (err) => {
       done();
-    });
-  });
-
-  describe("GET /users", () => {
-    it("should get all users", (done) => {
-      chai
-        .request(app)
-        .get("/users")
-        .end((err, res) => {
-          res.should.have.status(200);
-          res.body.should.be.a("array");
-          res.body.length.should.be.eql(0);
-          done();
-        });
-    });
-  });
-
-  describe("GET /users/{id}", () => {
-    it("should return a 400 if the id sent is not a valid mongo id.", (done) => {
-      chai
-        .request(app)
-        .get("/users/blah")
-        .end((err, res) => {
-          res.should.have.status(400);
-          done();
-        });
-    });
-
-    it("should return a 404 if the user is not found.", (done) => {
-      chai
-        .request(app)
-        .get("/users/5c885d0ef35e8503bbf9fbdd")
-        .end((err, res) => {
-          res.should.have.status(404);
-          done();
-        });
-    });
-
-    it("should get a single user", (done) => {
-      createUser((user) => {
-        chai
-          .request(app)
-          .get("/users/" + user._id)
-          .end((err, res) => {
-            res.should.have.status(200);
-            res.body.should.be.a("object");
-            res.body.should.have.property("name");
-            res.body.should.have.property("email");
-            res.body.should.not.have.property("passwordHash");
-            res.body.should.have.property("createdAt");
-            res.body.should.have.property("updatedAt");
-            done();
-          });
-      });
-    });
-  });
-
-  describe("PUT /users", () => {
-    it("should return a 400 if the id sent is not a valid mongo id.", (done) => {
-      chai
-        .request(app)
-        .put("/users/blah")
-        .end((err, res) => {
-          res.should.have.status(400);
-          done();
-        });
-    });
-
-    it("should return a 404 if the user is not found.", (done) => {
-      chai
-        .request(app)
-        .put("/users/5c885d0ef35e8503bbf9fbdd")
-        .send({ title: "blah" })
-        .end((err, res) => {
-          res.should.have.status(404);
-          done();
-        });
-    });
-
-    it("should update a user", (done) => {
-      createUser((user) => {
-        user.name = "New User!";
-
-        chai
-          .request(app)
-          .put("/users/" + user._id)
-          .send(user)
-          .end((err, res) => {
-            res.should.have.status(200);
-            res.body.should.be.a("object");
-            res.body.should.have.property("name");
-            res.body.should.have.property("email");
-            res.body.should.not.have.property("passwordHash");
-            res.body.should.have.property("_id");
-            done();
-          });
-      });
     });
   });
 
@@ -218,41 +134,6 @@ describe("Users", () => {
           .send(req)
           .end((err, res) => {
             res.should.have.status(401);
-            done();
-          });
-      });
-    });
-  });
-
-  describe("Delete /users", () => {
-    it("should return a 400 if the id sent is not a valid mongo id.", (done) => {
-      chai
-        .request(app)
-        .delete("/users/blah")
-        .end((err, res) => {
-          res.should.have.status(400);
-          done();
-        });
-    });
-
-    it("should return a 404 if the user is not found.", (done) => {
-      chai
-        .request(app)
-        .delete("/users/5c885d0ef35e8503bbf9fbdd")
-        .end((err, res) => {
-          res.should.have.status(404);
-          done();
-        });
-    });
-
-    it("should permanently delete a user", (done) => {
-      createUser((user) => {
-        chai
-          .request(app)
-          .delete("/users/" + user._id)
-          .end((err, res) => {
-            res.should.have.status(200);
-            res.body.should.be.a("object");
             done();
           });
       });

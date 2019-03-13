@@ -1,5 +1,7 @@
 import { NextFunction, Request, Response } from "express";
 import { check, validationResult } from "express-validator/check";
+import { IAuthorizedRequest } from "../interfaces/request.interface";
+import { authorize } from "../middlewares/authorization";
 import { INoteModel, Note } from "../models/note.schema";
 
 /**
@@ -9,8 +11,17 @@ import { INoteModel, Note } from "../models/note.schema";
  * @param res  {Response} Express Response Object
  * @param next {NextFunction} Next Function to continue
  */
-export const getAll = (req: Request, res: Response, next: NextFunction) => {
-  Note.find()
+export const getAll = (
+  req: IAuthorizedRequest,
+  res: Response,
+  next: NextFunction
+) => {
+  if (!req.user) {
+    res.sendStatus(400);
+    return;
+  }
+
+  Note.find({ userId: req.user })
     .then((notes: INoteModel[]) => {
       res.json(notes);
     })
@@ -21,10 +32,7 @@ export const createValidators = [
   check("title", "A title is required for your note!")
     .exists()
     .isString()
-    .isLength({ min: 1 }),
-  check("userId", "A userId is required for your note!")
-    .exists()
-    .isMongoId()
+    .isLength({ min: 1 })
 ];
 
 /**
@@ -34,19 +42,22 @@ export const createValidators = [
  * @param res  {Response} Express Response Object
  * @param next {NextFunction} Next Function to continue
  */
-export const create = (req: Request, res: Response, next: NextFunction) => {
+export const create = (
+  req: IAuthorizedRequest,
+  res: Response,
+  next: NextFunction
+) => {
   const errors = validationResult(req);
   if (!errors.isEmpty()) {
     res.status(400).json({ errors: errors.array() });
     return;
   }
 
-  const { description, title, userId } = req.body;
-
+  const { description, title } = req.body;
   const newNote = new Note({
     description,
     title,
-    userId
+    userId: req.user
   });
 
   Note.create(newNote)
@@ -69,7 +80,11 @@ export const getByIdValidators = [
  * @param res  {Response} Express Response Object
  * @param next {NextFunction} Next Function to continue
  */
-export const getById = (req: Request, res: Response, next: NextFunction) => {
+export const getById = (
+  req: IAuthorizedRequest,
+  res: Response,
+  next: NextFunction
+) => {
   const errors = validationResult(req);
   if (!errors.isEmpty()) {
     res.status(400).json({ errors: errors.array() });
@@ -80,14 +95,29 @@ export const getById = (req: Request, res: Response, next: NextFunction) => {
 
   Note.findById(id)
     .then((note: INoteModel) => {
+      // If note not found, return 404
       if (!note) {
         res.sendStatus(404);
         return;
       }
 
+      // If the note is marked as public, bypass
+      // authorization check!
+      if (note.isPublic) {
+        res.json(note);
+        return;
+      }
+
+      // If note is not shared with or belongs to
+      // user in request, return 401
+      if (note.userId !== req.user) {
+        res.sendStatus(401);
+        return;
+      }
+
       res.json(note);
     })
-    .catch((error) => {
+    .catch(() => {
       next();
     });
 };
@@ -108,7 +138,11 @@ export const updateValidators = [
  * @param res  {Response} Express Response Object
  * @param next {NextFunction} Next Function to continue
  */
-export const update = (req: Request, res: Response, next: NextFunction) => {
+export const update = (
+  req: IAuthorizedRequest,
+  res: Response,
+  next: NextFunction
+) => {
   const errors = validationResult(req);
   if (!errors.isEmpty()) {
     res.status(400).json({ errors: errors.array() });
@@ -128,9 +162,16 @@ export const update = (req: Request, res: Response, next: NextFunction) => {
     { new: true }
   )
     .then((note: INoteModel) => {
-
+      // If note not found, return 404
       if (!note) {
         res.sendStatus(404);
+        return;
+      }
+
+      // If note is not shared with or belongs to
+      // user in request, return 401
+      if (note.userId !== req.user) {
+        res.sendStatus(401);
         return;
       }
 
@@ -151,7 +192,11 @@ export const recycleValidators = [
  * @param res  {Response} Express Response Object
  * @param next {NextFunction} Next Function to continue
  */
-export const recycle = (req: Request, res: Response, next: NextFunction) => {
+export const recycle = async (
+  req: IAuthorizedRequest,
+  res: Response,
+  next: NextFunction
+) => {
   const errors = validationResult(req);
   if (!errors.isEmpty()) {
     res.status(400).json({ errors: errors.array() });
@@ -160,18 +205,26 @@ export const recycle = (req: Request, res: Response, next: NextFunction) => {
 
   const id: string = req.params.id;
 
-  Note.findByIdAndUpdate(
-    id,
-    {
-      recycled: true
-    },
-    { new: true }
-  )
+  const foundNote = await Note.findById(id);
+
+  // If note not found, return 404
+  if (!foundNote) {
+    res.sendStatus(404);
+    return;
+  }
+
+  // If note is not shared with or belongs to
+  // user in request, return 401
+  if (foundNote.userId !== req.user) {
+    res.sendStatus(401);
+    return;
+  }
+
+  foundNote.recycled = true;
+
+  foundNote
+    .save()
     .then((note: INoteModel) => {
-      if (!note) {
-        res.sendStatus(404);
-        return;
-      }
       res.json(note);
     })
     .catch(next);
@@ -189,7 +242,7 @@ export const restoreValidators = [
  * @param res  {Response} Express Response Object
  * @param next {NextFunction} Next Function to continue
  */
-export const restore = (req: Request, res: Response, next: NextFunction) => {
+export const restore = async (req: IAuthorizedRequest, res: Response, next: NextFunction) => {
   const errors = validationResult(req);
   if (!errors.isEmpty()) {
     res.status(400).json({ errors: errors.array() });
@@ -197,20 +250,26 @@ export const restore = (req: Request, res: Response, next: NextFunction) => {
   }
 
   const id: string = req.params.id;
+  const foundNote = await Note.findById(id);
 
-  Note.findByIdAndUpdate(
-    id,
-    {
-      recycled: false
-    },
-    { new: true }
-  )
+  // If note not found, return 404
+  if (!foundNote) {
+    res.sendStatus(404);
+    return;
+  }
+
+  // If note is not shared with or belongs to
+  // user in request, return 401
+  if (foundNote.userId !== req.user) {
+    res.sendStatus(401);
+    return;
+  }
+
+  foundNote.recycled = false;
+
+  foundNote
+    .save()
     .then((note: INoteModel) => {
-      if (!note) {
-        res.sendStatus(404);
-        return;
-      }
-
       res.json(note);
     })
     .catch(next);
@@ -233,7 +292,6 @@ export const deletePermanently = (
   res: Response,
   next: NextFunction
 ) => {
-
   const errors = validationResult(req);
   if (!errors.isEmpty()) {
     res.status(400).json({ errors: errors.array() });
