@@ -161,43 +161,6 @@ export const getById = (req: Request, res: Response, next: NextFunction) => {
     });
 };
 
-export const searchByEmailValidators = [check("email").exists()];
-
-/**
- * Search by Email
- *
- * @param req {Request} Express Request Object
- * @param res  {Response} Express Response Object
- * @param next {NextFunction} Next Function to continue
- */
-
-const escapeRegex = text => {
-  return text.replace(/[-[\]{}()*+?.,\\^$|#\s]/g, "\\$&");
-};
-
-export const searchByEmail = (
-  req: Request,
-  res: Response,
-  next: NextFunction
-) => {
-  const errors = validationResult(req);
-  if (!errors.isEmpty()) {
-    res.status(400).json({ errors: errors.array() });
-    return;
-  }
-
-  const email: string = req.query.email;
-  const regex = new RegExp(escapeRegex(email), "gi");
-
-  User.find({ email: regex })
-    .then((users: IUserModel[]) => {
-      res.json(users);
-    })
-    .catch(error => {
-      next();
-    });
-};
-
 export const updateValidators = [
   check("id", "The ID must be passed to update a user.")
     .exists()
