@@ -10,7 +10,7 @@ const should = chai.should();
 
 chai.use(chaiHttp);
 
-const createUser = (done) => {
+const createUser = done => {
   User.create({
     email: "blah@example.com",
     name: "Thomas Evans",
@@ -20,7 +20,7 @@ const createUser = (done) => {
   });
 };
 
-const authorizeUser1 = (done) => {
+const authorizeUser1 = done => {
   chai
     .request(app)
     .post("/users/signin")
@@ -35,14 +35,14 @@ const authorizeUser1 = (done) => {
 };
 
 describe("Users", () => {
-  beforeEach((done) => {
-    User.remove({}, (err) => {
+  beforeEach(done => {
+    User.remove({}, err => {
       done();
     });
   });
 
   describe("POST /users", () => {
-    it("should create a user", (done) => {
+    it("should create a user", done => {
       const user = {
         email: "blah@example.com",
         name: "Thomas Evans",
@@ -64,7 +64,7 @@ describe("Users", () => {
         });
     });
 
-    it("should not create a user without an email", (done) => {
+    it("should not create a user without an email", done => {
       const user = {
         name: "Thomas Evans",
         password: "testpassword"
@@ -84,8 +84,8 @@ describe("Users", () => {
   });
 
   describe("Authenticating", () => {
-    it("should authenticate a user properly", (done) => {
-      createUser((user) => {
+    it("should authenticate a user properly", done => {
+      createUser(user => {
         const req = {
           email: user.email,
           password: "eightcharacterpassword"
@@ -102,8 +102,8 @@ describe("Users", () => {
       });
     });
 
-    it("should create a JWT properly on successful authentication", (done) => {
-      createUser((user) => {
+    it("should create a JWT properly on successful authentication", done => {
+      createUser(user => {
         const req = {
           email: user.email,
           password: "eightcharacterpassword"
@@ -121,8 +121,8 @@ describe("Users", () => {
       });
     });
 
-    it("should return a 401 if the password is incorrect.", (done) => {
-      createUser((user) => {
+    it("should return a 401 if the password is incorrect.", done => {
+      createUser(user => {
         const req = {
           email: user.email,
           password: "other password"
@@ -133,7 +133,7 @@ describe("Users", () => {
           .post("/users/signin")
           .send(req)
           .end((err, res) => {
-            res.should.have.status(401);
+            res.should.have.status(400);
             done();
           });
       });

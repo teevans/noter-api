@@ -5,6 +5,7 @@ const router = express.Router();
 import * as NotesController from "../controllers/notes.controller";
 
 router.get("/", authorize, NotesController.getAll);
+router.get("/recycled", authorize, NotesController.getAllRecycled);
 router.get(
   "/:id",
   authorize,

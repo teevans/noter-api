@@ -20,9 +20,8 @@ export const getAll = (req: Request, res: Response, next: NextFunction) => {
 };
 
 export const signInValidators = [
-  check("email", "E-Mail is required.")
-    .exists()
-    .isEmail(),
+  check("email", "E-Mail is required.").exists(),
+  check("email", "E-Mail must be a valid email.").isEmail(),
   check("password", "Password is required.").exists()
 ];
 
@@ -49,23 +48,25 @@ export const signIn = async (
   const user = await User.findOne({ email });
 
   if (user && bcrypt.compareSync(password, user.passwordHash)) {
-
     const secret = process.env.JWT_SECRET || "secret";
     // To all detail oriented observers. You'll notice this is
     // not in any way secure or verifyable. You could forge a JWT
     // token and have complete access to this setup. This is not
     // designed to be production ready when it comes to the security
     // aspect. Yet.
-    const token = jwt.sign({ userId: user._id}, secret, {
-      expiresIn: "2 days",
+    const token = jwt.sign({ userId: user._id, userName: user.name }, secret, {
+      expiresIn: "2 days"
     });
 
     res.status(200).json({ token });
     return;
   }
 
-  res.sendStatus(401);
+  res
+    .status(400)
+    .json({ errors: [{ msg: "E-Mail or Password is incorrect." }] });
 };
+
 export const createValidators = [
   check("email", "E-Mail is required.")
     .exists()
@@ -85,7 +86,11 @@ export const createValidators = [
  * @param res  {Response} Express Response Object
  * @param next {NextFunction} Next Function to continue
  */
-export const create = (req: Request, res: Response, next: NextFunction) => {
+export const create = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
   const errors = validationResult(req);
   if (!errors.isEmpty()) {
     res.status(400).json({ errors: errors.array() });
@@ -93,6 +98,15 @@ export const create = (req: Request, res: Response, next: NextFunction) => {
   }
 
   const { email, name, password } = req.body;
+
+  // Check for duplicates.
+  const existingUsers = await User.find({ email });
+  if (existingUsers.length > 0) {
+    res
+      .status(400)
+      .json({ errors: [{ msg: "A user with that email already exists!" }] });
+    return;
+  }
 
   const newUser = new User({
     email,
@@ -142,7 +156,7 @@ export const getById = (req: Request, res: Response, next: NextFunction) => {
 
       res.json(user);
     })
-    .catch((error) => {
+    .catch(error => {
       next();
     });
 };
