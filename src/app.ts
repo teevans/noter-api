@@ -40,7 +40,9 @@ app.use((req, res, next) => {
 
 app.use(logger("dev"));
 
-app.use(cors(corsOptions));
+if (process.env.NODE_ENV !== "test") {
+  app.use(cors(corsOptions));
+}
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));

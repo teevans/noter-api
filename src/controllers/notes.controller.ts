@@ -3,6 +3,7 @@ import { check, validationResult } from "express-validator/check";
 import { IAuthorizedRequest } from "../interfaces/request.interface";
 import { authorize } from "../middlewares/authorization";
 import { INoteModel, Note } from "../models/note.schema";
+import { IUserModel, User } from "../models/user.schema";
 
 /**
  * Get All Notes
@@ -335,12 +336,62 @@ export const deletePermanently = (
 
   const id: string = req.params.id;
 
-  Note.findByIdAndDelete(id)
+  Note.findByIdAndDelete(id).then((note: INoteModel) => {
+    if (!note) {
+      res.sendStatus(404);
+      return;
+    }
+    res.json(note);
+  });
+};
+
+export const shareNoteWithUserValidators = [check("email").exists()];
+/**
+ * Takes an email as a query paramenter and shares the note
+ * with that user.
+ *
+ * @param req {Request} Express Request Object
+ * @param res  {Response} Express Response Object
+ * @param next {NextFunction} Next Function to continue
+ */
+export const shareNoteWithUser = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
+  const errors = validationResult(req);
+  if (!errors.isEmpty()) {
+    res.status(400).json({ errors: errors.array() });
+    return;
+  }
+
+  const id: string = req.params.id;
+  const email: string = req.query.email;
+
+  const users: IUserModel[] = await User.find({ email });
+
+  if (users.length === 0) {
+    res.status(400).json({ errors: [{ msg: "User not found." }] });
+    return;
+  }
+
+  const foundNote = await Note.findById(id);
+  if (!foundNote) {
+    res.status(400).json({ errors: [{ msg: "Note not found." }] });
+    return;
+  }
+
+  if (foundNote.sharedWith.indexOf(users[0]._id) !== -1) {
+    // Note is already shared.
+    res.json(foundNote);
+    return;
+  }
+
+  foundNote.sharedWith.push(users[0]._id);
+
+  foundNote
+    .save()
     .then((note: INoteModel) => {
-      if (!note) {
-        res.sendStatus(404);
-        return;
-      }
       res.json(note);
     })
     .catch(next);

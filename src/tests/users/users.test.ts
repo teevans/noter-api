@@ -41,7 +41,7 @@ describe("Users", () => {
     });
   });
 
-  describe("POST /users", () => {
+  describe("POST /users/register", () => {
     it("should create a user", done => {
       const user = {
         email: "blah@example.com",
@@ -51,7 +51,7 @@ describe("Users", () => {
 
       chai
         .request(app)
-        .post("/users")
+        .post("/users/register")
         .send(user)
         .end((err, res) => {
           res.should.have.status(201);
@@ -72,7 +72,7 @@ describe("Users", () => {
 
       chai
         .request(app)
-        .post("/users")
+        .post("/users/register")
         .send(user)
         .end((err, res) => {
           res.should.have.status(400);

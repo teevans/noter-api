@@ -25,6 +25,12 @@ router.put(
   NotesController.update
 );
 router.post(
+  "/:id/share",
+  authorize,
+  NotesController.shareNoteWithUserValidators,
+  NotesController.shareNoteWithUser
+);
+router.post(
   "/:id/recycle",
   authorize,
   NotesController.recycleValidators,
