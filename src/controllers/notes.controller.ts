@@ -48,9 +48,7 @@ export const getAllRecycled = (
     return;
   }
 
-  Note.find({
-    $or: [{ userId: req.user, recycled: true }, { sharedWith: req.user }]
-  })
+  Note.find({ userId: req.user, recycled: true })
     .then((notes: INoteModel[]) => {
       res.json(notes);
     })
